@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Play } from 'lucide-react';
 import { GameState } from '@/types/tetris';
 import { BOARD_WIDTH, BOARD_HEIGHT } from '@/constants/tetris';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -12,6 +13,8 @@ interface GameBoardProps {
 }
 
 const GameBoard = ({ gameState, onStartGame, onTogglePause }: GameBoardProps) => {
+  const isMobile = useIsMobile();
+  
   const renderBoard = () => {
     const displayBoard = gameState.board.map(row => [...row]);
     
@@ -30,12 +33,14 @@ const GameBoard = ({ gameState, onStartGame, onTogglePause }: GameBoardProps) =>
       }
     }
 
+    const cellSize = isMobile ? 'w-6 h-6' : 'w-8 h-8';
+    
     return displayBoard.map((row, y) => (
       <div key={y} className="flex">
         {row.map((cell, x) => (
           <div
             key={x}
-            className={`w-8 h-8 border border-gray-700 transition-all duration-200 ${
+            className={`${cellSize} border border-gray-700 transition-all duration-200 ${
               cell 
                 ? `${cell} shadow-lg border-white/30 animate-pulse` 
                 : 'bg-gray-900'
@@ -50,12 +55,12 @@ const GameBoard = ({ gameState, onStartGame, onTogglePause }: GameBoardProps) =>
   };
 
   return (
-    <Card className="p-6 bg-black/50 backdrop-blur-sm border-purple-500/30 flex-shrink-0">
+    <Card className={`${isMobile ? 'p-3' : 'p-6'} bg-black/50 backdrop-blur-sm border-purple-500/30 flex-shrink-0`}>
       <div className="relative">
         {gameState.gameOver && (
           <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10 rounded-lg">
             <div className="text-center">
-              <h2 className="text-4xl font-bold text-red-400 mb-4">Game Over!</h2>
+              <h2 className={`${isMobile ? 'text-2xl' : 'text-4xl'} font-bold text-red-400 mb-4`}>Game Over!</h2>
               <p className="text-white mb-4">Final Score: {gameState.score}</p>
               <Button onClick={onStartGame} className="bg-purple-600 hover:bg-purple-700">
                 Play Again
@@ -67,7 +72,7 @@ const GameBoard = ({ gameState, onStartGame, onTogglePause }: GameBoardProps) =>
         {gameState.paused && !gameState.gameOver && (
           <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10 rounded-lg">
             <div className="text-center">
-              <h2 className="text-4xl font-bold text-yellow-400 mb-4">Paused</h2>
+              <h2 className={`${isMobile ? 'text-2xl' : 'text-4xl'} font-bold text-yellow-400 mb-4`}>Paused</h2>
               <Button onClick={onTogglePause} className="bg-purple-600 hover:bg-purple-700">
                 <Play className="w-4 h-4 mr-2" />
                 Resume

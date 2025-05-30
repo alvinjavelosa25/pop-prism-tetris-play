@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { GameState, MoveDirection } from '@/types/tetris';
 import { BOARD_WIDTH, BOARD_HEIGHT } from '@/constants/tetris';
@@ -15,8 +14,12 @@ import ScorePanel from '@/components/ScorePanel';
 import NextPiecesPanel from '@/components/NextPiecesPanel';
 import ControlsPanel from '@/components/ControlsPanel';
 import GameBoard from '@/components/GameBoard';
+import MobileControls from '@/components/MobileControls';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const TetrisGame = () => {
+  const isMobile = useIsMobile();
+  
   const [gameState, setGameState] = useState<GameState>({
     board: Array(BOARD_HEIGHT).fill(null).map(() => Array(BOARD_WIDTH).fill(null)),
     currentPiece: null,
@@ -206,43 +209,98 @@ const TetrisGame = () => {
   }, [movePiece, holdPiece]);
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 p-6 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen justify-center">
-      {/* Left Panel - Hold and Statistics */}
-      <div className="flex flex-col gap-4 w-full xl:w-64">
-        <HoldPanel heldPiece={gameState.heldPiece} />
-        <StatisticsPanel 
-          gameTime={gameState.gameTime}
-          piecesDropped={gameState.piecesDropped}
-          lines={gameState.lines}
-        />
+    <div className="flex flex-col gap-4 p-4 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen">
+      {/* Mobile Top Info Bar */}
+      {isMobile && (
+        <div className="flex gap-2 justify-between">
+          <div className="flex-1">
+            <ScorePanel 
+              score={gameState.score}
+              level={gameState.level}
+              lines={gameState.lines}
+            />
+          </div>
+          <div className="w-24">
+            <HoldPanel heldPiece={gameState.heldPiece} />
+          </div>
+        </div>
+      )}
+
+      {/* Main Game Area */}
+      <div className="flex flex-col lg:flex-row gap-4 justify-center items-start">
+        {/* Desktop Left Panel */}
+        {!isMobile && (
+          <div className="flex flex-col gap-4 w-64">
+            <HoldPanel heldPiece={gameState.heldPiece} />
+            <StatisticsPanel 
+              gameTime={gameState.gameTime}
+              piecesDropped={gameState.piecesDropped}
+              lines={gameState.lines}
+            />
+          </div>
+        )}
+
+        {/* Game Board - Centered */}
+        <div className="flex flex-col items-center gap-4">
+          <GameBoard 
+            gameState={gameState}
+            onStartGame={startGame}
+            onTogglePause={togglePause}
+          />
+          
+          {/* Mobile Controls Below Board */}
+          {isMobile && (
+            <MobileControls
+              gameOver={gameState.gameOver}
+              paused={gameState.paused}
+              canHold={gameState.canHold}
+              currentPiece={gameState.currentPiece}
+              onMove={movePiece}
+              onHold={holdPiece}
+              onTogglePause={togglePause}
+              onStartGame={startGame}
+            />
+          )}
+        </div>
+
+        {/* Desktop Right Panel */}
+        {!isMobile && (
+          <div className="flex flex-col gap-4 w-64">
+            <ScorePanel 
+              score={gameState.score}
+              level={gameState.level}
+              lines={gameState.lines}
+            />
+            <NextPiecesPanel nextPieces={gameState.nextPieces} />
+            <ControlsPanel 
+              gameOver={gameState.gameOver}
+              paused={gameState.paused}
+              canHold={gameState.canHold}
+              currentPiece={gameState.currentPiece}
+              onMove={movePiece}
+              onHold={holdPiece}
+              onTogglePause={togglePause}
+              onStartGame={startGame}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Game Board - Centered */}
-      <GameBoard 
-        gameState={gameState}
-        onStartGame={startGame}
-        onTogglePause={togglePause}
-      />
-
-      {/* Right Panel - Score and Next Pieces */}
-      <div className="flex flex-col gap-4 w-full xl:w-64">
-        <ScorePanel 
-          score={gameState.score}
-          level={gameState.level}
-          lines={gameState.lines}
-        />
-        <NextPiecesPanel nextPieces={gameState.nextPieces} />
-        <ControlsPanel 
-          gameOver={gameState.gameOver}
-          paused={gameState.paused}
-          canHold={gameState.canHold}
-          currentPiece={gameState.currentPiece}
-          onMove={movePiece}
-          onHold={holdPiece}
-          onTogglePause={togglePause}
-          onStartGame={startGame}
-        />
-      </div>
+      {/* Mobile Bottom Panel */}
+      {isMobile && (
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <NextPiecesPanel nextPieces={gameState.nextPieces} />
+          </div>
+          <div className="flex-1">
+            <StatisticsPanel 
+              gameTime={gameState.gameTime}
+              piecesDropped={gameState.piecesDropped}
+              lines={gameState.lines}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

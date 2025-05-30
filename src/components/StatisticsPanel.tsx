@@ -1,6 +1,6 @@
 
 import { Card } from '@/components/ui/card';
-import { formatTime } from '@/utils/tetrisUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StatisticsPanelProps {
   gameTime: number;
@@ -9,30 +9,32 @@ interface StatisticsPanelProps {
 }
 
 const StatisticsPanel = ({ gameTime, piecesDropped, lines }: StatisticsPanelProps) => {
+  const isMobile = useIsMobile();
+  
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <Card className="p-4 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
-      <h2 className="text-lg font-bold mb-3 text-purple-300">Statistics</h2>
-      <div className="space-y-2 text-sm">
+    <Card className={`${isMobile ? 'p-3' : 'p-4'} bg-black/50 backdrop-blur-sm border-purple-500/30 text-white`}>
+      <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold ${isMobile ? 'mb-2' : 'mb-3'} text-purple-300`}>Stats</h2>
+      <div className={`${isMobile ? 'space-y-1' : 'space-y-2'}`}>
         <div className="flex justify-between">
-          <span>Time:</span>
-          <span className="font-bold text-cyan-400">{formatTime(gameTime)}</span>
+          <span className={isMobile ? 'text-sm' : ''}>Time:</span>
+          <span className={`font-bold text-cyan-400 ${isMobile ? 'text-sm' : ''}`}>{formatTime(gameTime)}</span>
         </div>
         <div className="flex justify-between">
-          <span>Pieces:</span>
-          <span className="font-bold text-green-400">{piecesDropped}</span>
+          <span className={isMobile ? 'text-sm' : ''}>Pieces:</span>
+          <span className={`font-bold text-green-400 ${isMobile ? 'text-sm' : ''}`}>{piecesDropped}</span>
         </div>
-        <div className="flex justify-between">
-          <span>PPS:</span>
-          <span className="font-bold text-orange-400">
-            {gameTime > 0 ? (piecesDropped / gameTime).toFixed(1) : '0.0'}
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span>LPM:</span>
-          <span className="font-bold text-pink-400">
-            {gameTime > 0 ? Math.round((lines * 60) / gameTime) : 0}
-          </span>
-        </div>
+        {!isMobile && (
+          <div className="flex justify-between">
+            <span>Lines:</span>
+            <span className="font-bold text-blue-400">{lines}</span>
+          </div>
+        )}
       </div>
     </Card>
   );
