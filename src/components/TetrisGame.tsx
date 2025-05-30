@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -67,24 +66,34 @@ interface GamePiece {
 interface GameState {
   board: (string | null)[][];
   currentPiece: GamePiece | null;
-  nextPiece: GamePiece | null;
+  nextPieces: GamePiece[];
+  heldPiece: GamePiece | null;
+  canHold: boolean;
   score: number;
   level: number;
   lines: number;
   gameOver: boolean;
   paused: boolean;
+  piecesDropped: number;
+  gameTime: number;
+  startTime: number | null;
 }
 
 const TetrisGame = () => {
   const [gameState, setGameState] = useState<GameState>({
     board: Array(BOARD_HEIGHT).fill(null).map(() => Array(BOARD_WIDTH).fill(null)),
     currentPiece: null,
-    nextPiece: null,
+    nextPieces: [],
+    heldPiece: null,
+    canHold: true,
     score: 0,
     level: 1,
     lines: 0,
     gameOver: false,
-    paused: false
+    paused: false,
+    piecesDropped: 0,
+    gameTime: 0,
+    startTime: null
   });
 
   const createRandomPiece = useCallback((): GamePiece => {
@@ -156,6 +165,37 @@ const TetrisGame = () => {
     return { newBoard, linesCleared };
   }, []);
 
+  const holdPiece = useCallback(() => {
+    if (!gameState.canHold || !gameState.currentPiece || gameState.gameOver || gameState.paused) return;
+
+    setGameState(prev => {
+      const currentPiece = prev.currentPiece!;
+      const heldPiece = prev.heldPiece;
+      
+      if (heldPiece) {
+        // Swap current and held piece
+        return {
+          ...prev,
+          currentPiece: { ...heldPiece, x: Math.floor(BOARD_WIDTH / 2) - Math.floor(heldPiece.shape[0].length / 2), y: 0 },
+          heldPiece: { ...currentPiece, x: 0, y: 0 },
+          canHold: false
+        };
+      } else {
+        // Move current piece to hold and get next piece
+        const newCurrent = prev.nextPieces[0];
+        const newNextPieces = [...prev.nextPieces.slice(1), createRandomPiece()];
+        
+        return {
+          ...prev,
+          currentPiece: { ...newCurrent, x: Math.floor(BOARD_WIDTH / 2) - Math.floor(newCurrent.shape[0].length / 2), y: 0 },
+          nextPieces: newNextPieces,
+          heldPiece: { ...currentPiece, x: 0, y: 0 },
+          canHold: false
+        };
+      }
+    });
+  }, [gameState.canHold, gameState.currentPiece, gameState.gameOver, gameState.paused, createRandomPiece]);
+
   const movePiece = useCallback((direction: 'left' | 'right' | 'down' | 'rotate') => {
     if (gameState.gameOver || gameState.paused || !gameState.currentPiece) return;
 
@@ -188,18 +228,21 @@ const TetrisGame = () => {
         const newLines = prev.lines + linesCleared;
         const newLevel = Math.floor(newLines / 10) + 1;
         
-        const nextPiece = createRandomPiece();
+        const nextPiece = prev.nextPieces[0];
+        const newNextPieces = [...prev.nextPieces.slice(1), createRandomPiece()];
         const gameOver = !isValidPosition(nextPiece, clearedBoard);
         
         return {
           ...prev,
           board: clearedBoard,
-          currentPiece: prev.nextPiece,
-          nextPiece: gameOver ? prev.nextPiece : createRandomPiece(),
+          currentPiece: gameOver ? prev.currentPiece : nextPiece,
+          nextPieces: newNextPieces,
           score: newScore,
           level: newLevel,
           lines: newLines,
-          gameOver
+          gameOver,
+          piecesDropped: prev.piecesDropped + 1,
+          canHold: true
         };
       }
       
@@ -208,24 +251,42 @@ const TetrisGame = () => {
   }, [gameState.gameOver, gameState.paused, gameState.currentPiece, isValidPosition, placePiece, clearLines, createRandomPiece]);
 
   const startGame = useCallback(() => {
-    const firstPiece = createRandomPiece();
-    const secondPiece = createRandomPiece();
+    const initialPieces = Array(5).fill(null).map(() => createRandomPiece());
     
     setGameState({
       board: Array(BOARD_HEIGHT).fill(null).map(() => Array(BOARD_WIDTH).fill(null)),
-      currentPiece: firstPiece,
-      nextPiece: secondPiece,
+      currentPiece: initialPieces[0],
+      nextPieces: initialPieces.slice(1),
+      heldPiece: null,
+      canHold: true,
       score: 0,
       level: 1,
       lines: 0,
       gameOver: false,
-      paused: false
+      paused: false,
+      piecesDropped: 0,
+      gameTime: 0,
+      startTime: Date.now()
     });
   }, [createRandomPiece]);
 
   const togglePause = () => {
     setGameState(prev => ({ ...prev, paused: !prev.paused }));
   };
+
+  // Game timer
+  useEffect(() => {
+    if (gameState.gameOver || gameState.paused || !gameState.startTime) return;
+
+    const timer = setInterval(() => {
+      setGameState(prev => ({
+        ...prev,
+        gameTime: Math.floor((Date.now() - prev.startTime!) / 1000)
+      }));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [gameState.gameOver, gameState.paused, gameState.startTime]);
 
   // Game loop
   useEffect(() => {
@@ -239,7 +300,7 @@ const TetrisGame = () => {
     return () => clearInterval(timer);
   }, [gameState.level, gameState.gameOver, gameState.paused, gameState.currentPiece, movePiece]);
 
-  // Keyboard controls
+  // Enhanced keyboard controls
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       switch (event.key) {
@@ -260,6 +321,11 @@ const TetrisGame = () => {
           event.preventDefault();
           movePiece('rotate');
           break;
+        case 'c':
+        case 'C':
+          event.preventDefault();
+          holdPiece();
+          break;
         case 'p':
         case 'P':
           togglePause();
@@ -269,7 +335,7 @@ const TetrisGame = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [movePiece]);
+  }, [movePiece, holdPiece]);
 
   const renderBoard = () => {
     const displayBoard = gameState.board.map(row => [...row]);
@@ -308,17 +374,17 @@ const TetrisGame = () => {
     ));
   };
 
-  const renderNextPiece = () => {
-    if (!gameState.nextPiece) return null;
+  const renderPiece = (piece: GamePiece | null, size: string = 'w-6 h-6') => {
+    if (!piece) return <div className="text-gray-500 text-center">Empty</div>;
 
-    return gameState.nextPiece.shape.map((row, y) => (
+    return piece.shape.map((row, y) => (
       <div key={y} className="flex justify-center">
         {row.map((cell, x) => (
           <div
             key={x}
-            className={`w-6 h-6 border ${
+            className={`${size} border ${
               cell 
-                ? `${gameState.nextPiece!.color} border-white/30 shadow-md` 
+                ? `${piece.color} border-white/30 shadow-md` 
                 : 'border-transparent'
             }`}
           />
@@ -327,10 +393,56 @@ const TetrisGame = () => {
     ));
   };
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-6 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen">
-      {/* Game Board */}
-      <Card className="p-6 bg-black/50 backdrop-blur-sm border-purple-500/30">
+    <div className="flex flex-col xl:flex-row gap-6 p-6 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen justify-center">
+      {/* Left Panel - Hold and Statistics */}
+      <div className="flex flex-col gap-4 w-full xl:w-64">
+        {/* Hold Piece */}
+        <Card className="p-4 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
+          <h2 className="text-lg font-bold mb-3 text-purple-300">Hold (C)</h2>
+          <div className="flex justify-center min-h-[80px] items-center">
+            <div className="grid gap-1">
+              {renderPiece(gameState.heldPiece)}
+            </div>
+          </div>
+        </Card>
+
+        {/* Game Statistics */}
+        <Card className="p-4 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
+          <h2 className="text-lg font-bold mb-3 text-purple-300">Statistics</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Time:</span>
+              <span className="font-bold text-cyan-400">{formatTime(gameState.gameTime)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Pieces:</span>
+              <span className="font-bold text-green-400">{gameState.piecesDropped}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>PPS:</span>
+              <span className="font-bold text-orange-400">
+                {gameState.gameTime > 0 ? (gameState.piecesDropped / gameState.gameTime).toFixed(1) : '0.0'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>LPM:</span>
+              <span className="font-bold text-pink-400">
+                {gameState.gameTime > 0 ? Math.round((gameState.lines * 60) / gameState.gameTime) : 0}
+              </span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Game Board - Centered */}
+      <Card className="p-6 bg-black/50 backdrop-blur-sm border-purple-500/30 flex-shrink-0">
         <div className="relative">
           {gameState.gameOver && (
             <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10 rounded-lg">
@@ -362,11 +474,11 @@ const TetrisGame = () => {
         </div>
       </Card>
 
-      {/* Side Panel */}
-      <div className="flex flex-col gap-4">
+      {/* Right Panel - Score and Next Pieces */}
+      <div className="flex flex-col gap-4 w-full xl:w-64">
         {/* Score Panel */}
-        <Card className="p-6 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
-          <h2 className="text-xl font-bold mb-4 text-purple-300">Stats</h2>
+        <Card className="p-4 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
+          <h2 className="text-lg font-bold mb-3 text-purple-300">Score</h2>
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>Score:</span>
@@ -383,19 +495,23 @@ const TetrisGame = () => {
           </div>
         </Card>
 
-        {/* Next Piece */}
-        <Card className="p-6 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
-          <h2 className="text-xl font-bold mb-4 text-purple-300">Next</h2>
-          <div className="flex justify-center">
-            <div className="grid gap-1">
-              {renderNextPiece()}
-            </div>
+        {/* Next Pieces */}
+        <Card className="p-4 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
+          <h2 className="text-lg font-bold mb-3 text-purple-300">Next</h2>
+          <div className="space-y-3">
+            {gameState.nextPieces.slice(0, 4).map((piece, index) => (
+              <div key={index} className="flex justify-center">
+                <div className="grid gap-1">
+                  {renderPiece(piece, index === 0 ? 'w-5 h-5' : 'w-4 h-4')}
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
 
         {/* Controls */}
-        <Card className="p-6 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
-          <h2 className="text-xl font-bold mb-4 text-purple-300">Controls</h2>
+        <Card className="p-4 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
+          <h2 className="text-lg font-bold mb-3 text-purple-300">Controls</h2>
           <div className="grid grid-cols-2 gap-2 mb-4">
             <Button
               variant="outline"
@@ -432,6 +548,16 @@ const TetrisGame = () => {
           </div>
           
           <div className="space-y-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={holdPiece}
+              className="w-full border-purple-500/50 text-white hover:bg-purple-600/20"
+              disabled={!gameState.canHold || gameState.gameOver}
+            >
+              Hold (C)
+            </Button>
+            
             {!gameState.currentPiece ? (
               <Button onClick={startGame} className="w-full bg-green-600 hover:bg-green-700">
                 Start Game
@@ -457,10 +583,10 @@ const TetrisGame = () => {
             )}
           </div>
           
-          <div className="mt-4 text-sm text-gray-400">
-            <p>Use arrow keys to move</p>
-            <p>Up arrow or Space to rotate</p>
-            <p>P to pause</p>
+          <div className="mt-4 text-xs text-gray-400">
+            <p>Arrow keys: Move/Rotate</p>
+            <p>C: Hold piece</p>
+            <p>P: Pause</p>
           </div>
         </Card>
       </div>
