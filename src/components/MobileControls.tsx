@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pause, Play, RotateCw, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
 import { MoveDirection } from '@/types/tetris';
+import { useRef, useCallback } from 'react';
 
 interface MobileControlsProps {
   gameOver: boolean;
@@ -25,6 +26,37 @@ const MobileControls = ({
   onTogglePause, 
   onStartGame 
 }: MobileControlsProps) => {
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTouchStart = useCallback((direction: MoveDirection) => {
+    if (gameOver || paused) return;
+    
+    // Immediate move
+    onMove(direction);
+    
+    // Start continuous movement for left, right, and down
+    if (direction === 'left' || direction === 'right' || direction === 'down') {
+      intervalRef.current = setInterval(() => {
+        onMove(direction);
+      }, 120); // Slightly faster for mobile
+    }
+  }, [onMove, gameOver, paused]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const handleMouseDown = useCallback((direction: MoveDirection) => {
+    handleTouchStart(direction);
+  }, [handleTouchStart]);
+
+  const handleMouseUp = useCallback(() => {
+    handleTouchEnd();
+  }, [handleTouchEnd]);
+
   return (
     <Card className="p-4 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white w-full max-w-md">
       {/* Game Control Buttons */}
@@ -87,7 +119,11 @@ const MobileControls = ({
         <Button
           variant="outline"
           size="lg"
-          onClick={() => onMove('left')}
+          onTouchStart={() => handleTouchStart('left')}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={() => handleMouseDown('left')}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
           className="border-blue-400 bg-blue-600 text-white hover:bg-blue-500 hover:border-blue-300 active:bg-blue-700 transition-all duration-150 h-16 w-full shadow-lg shadow-blue-600/20"
           disabled={gameOver || paused}
         >
@@ -96,7 +132,11 @@ const MobileControls = ({
         <Button
           variant="outline"
           size="lg"
-          onClick={() => onMove('down')}
+          onTouchStart={() => handleTouchStart('down')}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={() => handleMouseDown('down')}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
           className="border-green-400 bg-green-600 text-white hover:bg-green-500 hover:border-green-300 active:bg-green-700 transition-all duration-150 h-16 w-full shadow-lg shadow-green-600/20"
           disabled={gameOver || paused}
         >
@@ -105,7 +145,11 @@ const MobileControls = ({
         <Button
           variant="outline"
           size="lg"
-          onClick={() => onMove('right')}
+          onTouchStart={() => handleTouchStart('right')}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={() => handleMouseDown('right')}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
           className="border-blue-400 bg-blue-600 text-white hover:bg-blue-500 hover:border-blue-300 active:bg-blue-700 transition-all duration-150 h-16 w-full shadow-lg shadow-blue-600/20"
           disabled={gameOver || paused}
         >
@@ -115,7 +159,7 @@ const MobileControls = ({
 
       {/* Instruction Text */}
       <div className="mt-3 text-xs text-gray-400 text-center">
-        <p>Tap buttons to control your piece</p>
+        <p>Hold buttons for continuous movement</p>
       </div>
     </Card>
   );

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Pause, Play, RotateCw, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
 import { MoveDirection } from '@/types/tetris';
+import { useRef, useCallback } from 'react';
 
 interface ControlsPanelProps {
   gameOver: boolean;
@@ -25,6 +26,37 @@ const ControlsPanel = ({
   onTogglePause, 
   onStartGame 
 }: ControlsPanelProps) => {
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseDown = useCallback((direction: MoveDirection) => {
+    if (gameOver || paused) return;
+    
+    // Immediate move
+    onMove(direction);
+    
+    // Start continuous movement for left, right, and down
+    if (direction === 'left' || direction === 'right' || direction === 'down') {
+      intervalRef.current = setInterval(() => {
+        onMove(direction);
+      }, 150);
+    }
+  }, [onMove, gameOver, paused]);
+
+  const handleMouseUp = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const handleTouchStart = useCallback((direction: MoveDirection) => {
+    handleMouseDown(direction);
+  }, [handleMouseDown]);
+
+  const handleTouchEnd = useCallback(() => {
+    handleMouseUp();
+  }, [handleMouseUp]);
+
   return (
     <Card className="p-4 bg-black/50 backdrop-blur-sm border-purple-500/30 text-white">
       <h2 className="text-lg font-bold mb-3 text-purple-300">Controls</h2>
@@ -32,24 +64,39 @@ const ControlsPanel = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onMove('left')}
+          onMouseDown={() => handleMouseDown('left')}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={() => handleTouchStart('left')}
+          onTouchEnd={handleTouchEnd}
           className="border-blue-400 bg-blue-600 text-white hover:bg-blue-500 hover:border-blue-300 active:bg-blue-700 transition-all duration-150 shadow-lg shadow-blue-600/20"
+          disabled={gameOver || paused}
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onMove('right')}
+          onMouseDown={() => handleMouseDown('right')}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={() => handleTouchStart('right')}
+          onTouchEnd={handleTouchEnd}
           className="border-blue-400 bg-blue-600 text-white hover:bg-blue-500 hover:border-blue-300 active:bg-blue-700 transition-all duration-150 shadow-lg shadow-blue-600/20"
+          disabled={gameOver || paused}
         >
           <ArrowRight className="w-4 h-4" />
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onMove('down')}
+          onMouseDown={() => handleMouseDown('down')}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={() => handleTouchStart('down')}
+          onTouchEnd={handleTouchEnd}
           className="border-green-400 bg-green-600 text-white hover:bg-green-500 hover:border-green-300 active:bg-green-700 transition-all duration-150 shadow-lg shadow-green-600/20"
+          disabled={gameOver || paused}
         >
           <ArrowDown className="w-4 h-4" />
         </Button>
@@ -58,6 +105,7 @@ const ControlsPanel = ({
           size="sm"
           onClick={() => onMove('rotate')}
           className="border-purple-400 bg-purple-600 text-white hover:bg-purple-500 hover:border-purple-300 active:bg-purple-700 transition-all duration-150 shadow-lg shadow-purple-600/20"
+          disabled={gameOver || paused}
         >
           <RotateCw className="w-4 h-4" />
         </Button>
