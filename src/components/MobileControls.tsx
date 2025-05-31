@@ -32,7 +32,7 @@ const MobileControls = ({
         {!currentPiece ? (
           <Button 
             onClick={onStartGame} 
-            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white shadow-lg shadow-gray-700/20 h-12 text-lg"
+            className="flex-1 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white shadow-lg shadow-cyan-600/20 h-12 text-lg transition-all duration-150"
           >
             <Play className="w-5 h-5 mr-2" />
             Start Game
@@ -41,7 +41,7 @@ const MobileControls = ({
           <>
             <Button 
               onClick={onTogglePause} 
-              className="flex-1 bg-gray-700 hover:bg-gray-600 text-white shadow-lg shadow-gray-700/20 h-12"
+              className="flex-1 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white shadow-lg shadow-cyan-600/20 h-12 transition-all duration-150"
               disabled={gameOver}
             >
               {paused ? (
@@ -58,7 +58,7 @@ const MobileControls = ({
             </Button>
             <Button
               onClick={onHold}
-              className="flex-1 border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors h-12"
+              className="flex-1 border-orange-400 bg-orange-600 text-white hover:bg-orange-500 hover:border-orange-300 active:bg-orange-700 transition-all duration-150 h-12 shadow-lg shadow-orange-600/20"
               variant="outline"
               disabled={!canHold || gameOver}
             >
@@ -76,7 +76,7 @@ const MobileControls = ({
           variant="outline"
           size="lg"
           onClick={() => onMove('rotate')}
-          className="border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors h-16 w-full"
+          className="border-purple-400 bg-purple-600 text-white hover:bg-purple-500 hover:border-purple-300 active:bg-purple-700 transition-all duration-150 h-16 w-full shadow-lg shadow-purple-600/20"
           disabled={gameOver || paused}
         >
           <RotateCw className="w-6 h-6" />
@@ -88,7 +88,7 @@ const MobileControls = ({
           variant="outline"
           size="lg"
           onClick={() => onMove('left')}
-          className="border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors h-16 w-full"
+          className="border-blue-400 bg-blue-600 text-white hover:bg-blue-500 hover:border-blue-300 active:bg-blue-700 transition-all duration-150 h-16 w-full shadow-lg shadow-blue-600/20"
           disabled={gameOver || paused}
         >
           <ArrowLeft className="w-6 h-6" />
@@ -97,7 +97,7 @@ const MobileControls = ({
           variant="outline"
           size="lg"
           onClick={() => onMove('down')}
-          className="border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors h-16 w-full"
+          className="border-green-400 bg-green-600 text-white hover:bg-green-500 hover:border-green-300 active:bg-green-700 transition-all duration-150 h-16 w-full shadow-lg shadow-green-600/20"
           disabled={gameOver || paused}
         >
           <ArrowDown className="w-6 h-6" />
@@ -106,7 +106,7 @@ const MobileControls = ({
           variant="outline"
           size="lg"
           onClick={() => onMove('right')}
-          className="border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors h-16 w-full"
+          className="border-blue-400 bg-blue-600 text-white hover:bg-blue-500 hover:border-blue-300 active:bg-blue-700 transition-all duration-150 h-16 w-full shadow-lg shadow-blue-600/20"
           disabled={gameOver || paused}
         >
           <ArrowRight className="w-6 h-6" />
