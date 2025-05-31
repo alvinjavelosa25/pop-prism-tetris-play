@@ -33,7 +33,7 @@ const ControlsPanel = ({
           variant="outline"
           size="sm"
           onClick={() => onMove('left')}
-          className="border-cyan-400/50 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-300 hover:text-cyan-100 transition-colors"
+          className="border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
@@ -41,7 +41,7 @@ const ControlsPanel = ({
           variant="outline"
           size="sm"
           onClick={() => onMove('right')}
-          className="border-cyan-400/50 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-300 hover:text-cyan-100 transition-colors"
+          className="border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors"
         >
           <ArrowRight className="w-4 h-4" />
         </Button>
@@ -49,7 +49,7 @@ const ControlsPanel = ({
           variant="outline"
           size="sm"
           onClick={() => onMove('down')}
-          className="border-yellow-400/50 text-yellow-300 hover:bg-yellow-500/20 hover:border-yellow-300 hover:text-yellow-100 transition-colors"
+          className="border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors"
         >
           <ArrowDown className="w-4 h-4" />
         </Button>
@@ -57,7 +57,7 @@ const ControlsPanel = ({
           variant="outline"
           size="sm"
           onClick={() => onMove('rotate')}
-          className="border-green-400/50 text-green-300 hover:bg-green-500/20 hover:border-green-300 hover:text-green-100 transition-colors"
+          className="border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors"
         >
           <RotateCw className="w-4 h-4" />
         </Button>
@@ -68,20 +68,20 @@ const ControlsPanel = ({
           variant="outline"
           size="sm"
           onClick={onHold}
-          className="w-full border-orange-400/50 text-orange-300 hover:bg-orange-500/20 hover:border-orange-300 hover:text-orange-100 transition-colors"
+          className="w-full border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:text-white transition-colors"
           disabled={!canHold || gameOver}
         >
           Hold (C)
         </Button>
         
         {!currentPiece ? (
-          <Button onClick={onStartGame} className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20">
+          <Button onClick={onStartGame} className="w-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg shadow-gray-700/20">
             Start Game
           </Button>
         ) : (
           <Button 
             onClick={onTogglePause} 
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/20"
+            className="w-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg shadow-gray-700/20"
             disabled={gameOver}
           >
             {paused ? (
